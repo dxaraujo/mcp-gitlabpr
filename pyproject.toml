@@ -1,7 +1,7 @@
 [project]
 name = "mcp-gitlabpr"
-version = "1.1.0"
-description = "MCP server para merge requests do GitLab (API v4, CE 10.8+): listar, obter e criar"
+version = "1.0.1"
+description = "MCP server para merge requests do GitLab (API v4, CE 10.8+): listar, obter, criar e mesclar, só no projeto do workspace"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

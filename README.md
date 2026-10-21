@@ -50,18 +50,21 @@ uv run mcp dev mcp_gitlabpr/server.py   # MCP Inspector
 
 ## Tools
 
-`projeto` é o caminho `grupo/projeto` (o MCP faz o URL-encode) ou o id numérico. **Sem `projeto`**, ele vem do remote
-do git da pasta em que o MCP roda (`origin`, ou o primeiro remote; aceita `https://`, `ssh://` e `git@host:`), e
-`origem` vem da branch atual. Fora de um repositório git a tool falha pedindo que o agente pergunte ao usuário. O
-cliente MCP precisa iniciar o servidor na pasta do workspace; se não iniciar, informe `projeto`. `iid` é o número do MR no projeto
-(o `!123` da tela). Autor e responsável são usernames: o MCP os converte em id por `GET /users?username=`, porque a 10.8
-só filtra por `author_id`/`assignee_id`.
+As tools só trabalham no **projeto do workspace**: não há como consultar outro projeto nem MRs de todos os projetos.
+O projeto vem do remote do git (`origin`, ou o primeiro remote; aceita `https://`, `ssh://` e `git@host:`) da `pasta`
+informada, o caminho absoluto da raiz do workspace, e `origem` vem da branch atual dela. O agente deve passar `pasta`
+sempre: o Kiro não inicia o MCP de um power na pasta do workspace, e sem `pasta` vale o cwd do processo. Fora de um
+repositório, a pessoa cola a URL do projeto no GitLab (ex.: `https://gitlab.SEU-SERVIDOR/grupo/projeto`; a URL de um MR do
+projeto também serve) e o agente a passa em `url_projeto`; aí `origem` é obrigatória no `gitlab_criar_mr`. O host do
+remote ou da URL precisa ser o do `gitlabpr.properties`; se não for, a tool recusa. `iid` é o número do MR no projeto (o `!123`
+da tela). Autor e responsável são usernames: o MCP os converte em id por `GET /users?username=`, porque a 10.8 só
+filtra por `author_id`/`assignee_id`.
 
 | Tool | Para quê |
 |---|---|
-| `gitlab_listar_mrs(projeto?, todos_projetos=false, estado=opened, busca?, origem?, destino?, autor?, responsavel?, limite≤100, pagina=1)` | MRs do projeto ou, com `todos_projetos`, de todos os visíveis (`scope=all`). Devolve `total`, `proxima_pagina` e os itens resumidos |
-| `gitlab_obter_mr(iid, projeto?, diffs=false)` | Detalhes do MR (descrição, labels, conflitos, merge). Com `diffs`, os arquivos alterados e o diff de cada um, cortado em 4000 caracteres |
-| `gitlab_criar_mr(titulo, destino, origem?, projeto?, descricao?, responsavel?, labels?, remover_origem=false)` | Cria o MR; a branch de origem precisa já estar no GitLab (`git push`). Se já existe um MR aberto entre as mesmas branches, o GitLab responde 409 |
-| `gitlab_mesclar_mr(iid, projeto?, sha?, remover_origem?, mensagem?)` | Faz o merge de um MR aberto; recusa antes de chamar o GitLab se ele está em WIP, tem conflito ou não é mesclável. Com `sha`, o GitLab recusa (409) se a branch recebeu commits depois desse commit |
+| `gitlab_listar_mrs(pasta?, url_projeto?, estado=opened, busca?, origem?, destino?, autor?, responsavel?, limite≤100, pagina=1)` | MRs do projeto. Devolve `total`, `proxima_pagina` e os itens resumidos |
+| `gitlab_obter_mr(iid, pasta?, url_projeto?, diffs=false)` | Detalhes do MR (descrição, labels, conflitos, merge). Com `diffs`, os arquivos alterados e o diff de cada um, cortado em 4000 caracteres |
+| `gitlab_criar_mr(titulo, destino, pasta?, url_projeto?, origem?, descricao?, responsavel?, labels?, remover_origem=false)` | Cria o MR; a branch de origem precisa já estar no GitLab (`git push`). Se já existe um MR aberto entre as mesmas branches, o GitLab responde 409 |
+| `gitlab_mesclar_mr(iid, pasta?, url_projeto?, sha?, remover_origem?, mensagem?)` | Faz o merge de um MR aberto; recusa antes de chamar o GitLab se ele está em WIP, tem conflito ou não é mesclável. Com `sha`, o GitLab recusa (409) se a branch recebeu commits depois desse commit |
 
 `estado` aceita `opened`, `closed`, `merged` ou `all`.
