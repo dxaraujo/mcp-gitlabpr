@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/dxaraujo/kiro/tree/main/mcps/gitlabpr"
+Repository = "https://github.com/dxaraujo/mcp-gitlabpr"
 
 [project.scripts]
 mcp-gitlabpr = "mcp_gitlabpr.server:main"
