@@ -93,8 +93,10 @@ def test_criar(fake):
     fake.routes[("POST", f"{API}/projects/g%2Fp/merge_requests")] = (201, MR)
     out = server.gitlab_criar_mr("Ajuste", "dev", origem="feat", responsavel="maria", labels=["a", "b"])
     assert json.loads(fake.calls[-1].body) == {"source_branch": "feat", "target_branch": "dev", "title": "Ajuste",
-                                               "remove_source_branch": False, "assignee_id": 9, "labels": "a,b"}
+                                               "remove_source_branch": True, "assignee_id": 9, "labels": "a,b"}
     assert out["iid"] == 7
+    server.gitlab_criar_mr("Ajuste", "dev", origem="feat", remover_origem=False)  # quem quiser manter a branch
+    assert json.loads(fake.calls[-1].body)["remove_source_branch"] is False
 
 
 def test_erros(fake):

@@ -64,7 +64,7 @@ filtra por `author_id`/`assignee_id`.
 |---|---|
 | `gitlab_listar_mrs(pasta?, url_projeto?, estado=opened, busca?, origem?, destino?, autor?, responsavel?, limite≤100, pagina=1)` | MRs do projeto. Devolve `total`, `proxima_pagina` e os itens resumidos |
 | `gitlab_obter_mr(iid, pasta?, url_projeto?, diffs=false)` | Detalhes do MR (descrição, labels, conflitos, merge). Com `diffs`, os arquivos alterados e o diff de cada um, cortado em 4000 caracteres |
-| `gitlab_criar_mr(titulo, destino, pasta?, url_projeto?, origem?, descricao?, responsavel?, labels?, remover_origem=false)` | Cria o MR; a branch de origem precisa já estar no GitLab (`git push`). Se já existe um MR aberto entre as mesmas branches, o GitLab responde 409 |
+| `gitlab_criar_mr(titulo, destino, pasta?, url_projeto?, origem?, descricao?, responsavel?, labels?, remover_origem=true)` | Cria o MR, já com "apagar a branch de origem após o merge" marcado (passe `remover_origem=false` para manter a branch); a branch de origem precisa já estar no GitLab (`git push`). Se já existe um MR aberto entre as mesmas branches, o GitLab responde 409 |
 | `gitlab_mesclar_mr(iid, pasta?, url_projeto?, sha?, remover_origem?, mensagem?)` | Faz o merge de um MR aberto; recusa antes de chamar o GitLab se ele está em WIP, tem conflito ou não é mesclável. Com `sha`, o GitLab recusa (409) se a branch recebeu commits depois desse commit |
 
 `estado` aceita `opened`, `closed`, `merged` ou `all`.

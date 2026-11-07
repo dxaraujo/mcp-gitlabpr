@@ -267,10 +267,10 @@ def gitlab_obter_mr(iid: int, pasta: str | None = None, url_projeto: str | None 
 @tool
 def gitlab_criar_mr(titulo: str, destino: str, pasta: str | None = None, url_projeto: str | None = None,
                     origem: str | None = None, descricao: str | None = None, responsavel: str | None = None,
-                    labels: list[str] | None = None, remover_origem: bool = False) -> dict:
+                    labels: list[str] | None = None, remover_origem: bool = True) -> dict:
     """Cria um merge request de `origem` (padrão: branch atual do git) para `destino` no projeto do repositório
     git em `pasta`. A branch de origem precisa estar no GitLab (git push). responsavel: username.
-    remover_origem: apaga a branch de origem após o merge. Falha (HTTP 409) se já existe MR aberto entre as branches."""
+    remover_origem (padrão: sim): o MR já nasce com 'apagar a branch de origem após o merge' marcado; passe False para manter a branch. Falha (HTTP 409) se já existe MR aberto entre as branches."""
     if not titulo.strip():
         raise ValueError("Informe `titulo`.")
     if url_projeto and not origem:
