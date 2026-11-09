@@ -54,15 +54,19 @@ def fake(tmp_path_factory, monkeypatch):
     server.set_session(None)
 
 
-def test_config(tmp_path):
-    with pytest.raises(FileNotFoundError):
-        config.load_config(tmp_path / "x")
-    p = tmp_path / "gitlabpr.properties"
-    p.write_text("[DEFAULT]\nurl = https://gitlab.test/\n")
-    with pytest.raises(ValueError, match="token"):
-        config.load_config(p)
-    p.write_text("[DEFAULT]\nurl = https://gitlab.test/\ntoken = a%b\n")
-    assert config.load_config(p) == GitlabConfig(url="https://gitlab.test", token="a%b")
+def test_config(monkeypatch, tmp_path):
+    for k in ("GITLAB_API_URL", "GITLAB_API_TOKEN", "GITLAB_CA_BUNDLE"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("GITLAB_API_URL", "https://gitlab.test/api/v4/")
+    with pytest.raises(ValueError, match="GITLAB_API_TOKEN"):
+        config.load_config()
+    monkeypatch.setenv("GITLAB_API_TOKEN", "a%b")
+    assert config.load_config() == GitlabConfig(url="https://gitlab.test", token="a%b")
+    monkeypatch.setenv("GITLAB_CA_BUNDLE", str(tmp_path / "x.pem"))
+    with pytest.raises(ValueError, match="GITLAB_CA_BUNDLE"):
+        config.load_config()
+    (tmp_path / "x.pem").write_text("pem")
+    assert config.ca_bundle() == tmp_path / "x.pem"
 
 
 def test_listar_projeto(fake):

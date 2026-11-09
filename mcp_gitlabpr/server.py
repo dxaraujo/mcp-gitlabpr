@@ -5,7 +5,7 @@ GitLab CE 10.8: autor e responsável vão por id (`author_username` é de versõ
 
 Só trabalha no projeto do repositório git do workspace (`pasta`; sem ela, a pasta em que o MCP roda), pelo remote
 origin ou o primeiro remote. Fora de um repositório, a pessoa cola a URL do projeto no GitLab (`url_projeto`). O host
-precisa ser o do gitlabpr.properties.
+precisa ser o de GITLAB_API_URL.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from requests.adapters import HTTPAdapter
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
-from .config import GitlabConfig, default_path, load_config
+from .config import GitlabConfig, ca_bundle, load_config
 
 mcp = MCPServer(
     "gitlabpr",
@@ -58,18 +58,13 @@ def tool(fn):
 
 # ---------------------------------------------------------------- HTTP
 
-def ca_bundle() -> Path:
-    """CAs extras (ex.: cadeia interna do GitLab), ao lado do gitlabpr.properties."""
-    return default_path().parent / "gitlabpr-bundle.pem"
-
-
 class _TlsAdapter(HTTPAdapter):
-    """CAs do sistema + gitlabpr-bundle.pem, se existir."""
+    """CAs do sistema + a cadeia de GITLAB_CA_BUNDLE, se definida."""
 
     def init_poolmanager(self, *args, **kwargs):
         ctx = ssl.create_default_context()
-        if ca_bundle().is_file():
-            ctx.load_verify_locations(ca_bundle())
+        if ca := ca_bundle():
+            ctx.load_verify_locations(ca)
         super().init_poolmanager(*args, ssl_context=ctx, **kwargs)
 
 
@@ -87,8 +82,8 @@ class GitlabSession:
             resp = self.session.request(method, url, timeout=TIMEOUT, **kwargs)
         except requests.exceptions.SSLError as exc:
             raise RuntimeError(
-                f"Certificado do servidor não confiável em {url}. Grave a cadeia de certificados (PEM) em "
-                f"{ca_bundle()} (ou aponte REQUESTS_CA_BUNDLE para ela) e reinicie o MCP. Detalhe: {exc}") from exc
+                f"Certificado do servidor não confiável em {url}. Instale a CA na máquina ou aponte GITLAB_CA_BUNDLE "
+                f"para a cadeia de certificados (PEM) e reinicie o MCP. Detalhe: {exc}") from exc
         if resp.status_code == 401:
             raise RuntimeError(f"HTTP 401 em {method} {url}: token inválido ou expirado (precisa do escopo `api`).")
         if not resp.ok:
@@ -101,7 +96,7 @@ _lock = threading.Lock()
 
 
 def get_session() -> GitlabSession:
-    """Sessão única por processo; carrega o gitlabpr.properties na primeira chamada."""
+    """Sessão única por processo; carrega as variáveis de ambiente na primeira chamada."""
     global _instance
     with _lock:
         if _instance is None:

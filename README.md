@@ -5,25 +5,15 @@ v4 com personal access token e só os parâmetros que já existem na **GitLab CE
 ([doc da 10.8.7](https://gitlab.com/gitlab-org/gitlab-foss/-/blob/v10.8.7/doc/api/merge_requests.md)), então também
 funciona em versões mais novas.
 
-## Credenciais
+## Configuração
 
-| SO | Arquivo |
-|---|---|
-| Linux/Mac | `~/.config/mcp-gitlabpr/gitlabpr.properties` |
-| Windows | `%APPDATA%\mcp-gitlabpr\gitlabpr.properties` |
+Só por variáveis de ambiente, no `env` do servidor MCP:
 
-Para usar outro caminho, defina a variável de ambiente `MCP_GITLABPR_CONFIG`.
-
-```ini
-[DEFAULT]
-url = https://gitlab.SEU-SERVIDOR
-token = SEU_PERSONAL_ACCESS_TOKEN
-```
-
-O token sai de *Settings → Access Tokens* com o escopo `api` e vai no header `PRIVATE-TOKEN`.
-
-**Certificados:** o MCP confia nas CAs da máquina e, se existir, em `gitlabpr-bundle.pem` na mesma pasta do
-`gitlabpr.properties` (cadeia PEM do servidor). `REQUESTS_CA_BUNDLE` também funciona.
+| Variável | Obrigatória | O que é |
+|---|---|---|
+| `GITLAB_API_URL` | sim | URL do GitLab (com ou sem `/api/v4`) |
+| `GITLAB_API_TOKEN` | sim | Personal access token com o escopo `api`, enviado no header `PRIVATE-TOKEN` (sai de *Settings → Access Tokens*) |
+| `GITLAB_CA_BUNDLE` | não | Caminho de um arquivo PEM com a cadeia do servidor, somada às CAs da máquina |
 
 ## Instalação
 
@@ -34,11 +24,21 @@ O token sai de *Settings → Access Tokens* com o escopo `api` e vai no header `
       "type": "stdio",
       "command": "uvx",
       "args": ["mcp-gitlabpr@latest"],
-      "env": { "UV_SYSTEM_CERTS": "true" }
+      "env": {
+        "GITLAB_API_URL": "https://gitlab.SEU-SERVIDOR",
+        "GITLAB_API_TOKEN": "${GITLAB_API_TOKEN}",
+        "UV_SYSTEM_CERTS": "true"
+      }
     }
   }
 }
 ```
+
+**Como passar as variáveis:** defina-as no bloco `env` do servidor MCP, como no exemplo. Para não gravar segredos em
+texto puro, use referências: `${VAR}` no Kiro IDE, `${env:VAR}` no Kiro CLI e `{env:VAR}` no opencode, e deixe o valor
+no gerenciador de segredos ou no ambiente de onde a ferramenta é aberta. Não há arquivo de configuração nem caminho padrão.
+No macOS, um app aberto pelo Dock não herda o `export` do shell: abra a ferramenta pelo terminal ou defina a variável no
+ambiente da sessão. Evite `export` no perfil do shell quando o agente puder rodar comandos, porque ele conseguiria ler o valor.
 
 Desenvolvimento:
 
@@ -56,7 +56,7 @@ informada, o caminho absoluto da raiz do workspace, e `origem` vem da branch atu
 sempre: o Kiro não inicia o MCP de um power na pasta do workspace, e sem `pasta` vale o cwd do processo. Fora de um
 repositório, a pessoa cola a URL do projeto no GitLab (ex.: `https://gitlab.SEU-SERVIDOR/grupo/projeto`; a URL de um MR do
 projeto também serve) e o agente a passa em `url_projeto`; aí `origem` é obrigatória no `gitlab_criar_mr`. O host do
-remote ou da URL precisa ser o do `gitlabpr.properties`; se não for, a tool recusa. `iid` é o número do MR no projeto (o `!123`
+remote ou da URL precisa ser o de `GITLAB_API_URL`; se não for, a tool recusa. `iid` é o número do MR no projeto (o `!123`
 da tela). Autor e responsável são usernames: o MCP os converte em id por `GET /users?username=`, porque a 10.8 só
 filtra por `author_id`/`assignee_id`.
 
